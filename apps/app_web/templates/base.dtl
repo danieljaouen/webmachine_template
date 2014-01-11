@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{% block title %}App Title{% endblock %}</title>
+        <meta charset="utf-8" />
+    </head>
+    <body>
+        {% block body %}
+        <header>
+            {% block header %}{% endblock %}
+        </header>
+
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+
+        <footer>
+            {% block footer %}{% endblock %}
+        </footer>
+        {% endblock %}
+    </body>
+</html>

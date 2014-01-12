@@ -11,13 +11,16 @@ ensure_started(App) ->
 
 start_link() ->
     ensure_started(crypto),
+    ensure_started(pooler),
     app_core_sup:start_link().
 
 start() ->
     ensure_started(crypto),
+    ensure_started(pooler),
     application:start(app_core).
 
 stop() ->
     Res = application:stop(app_core),
     application:stop(crypto),
+    application:stop(pooler),
     Res.

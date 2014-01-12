@@ -1,11 +1,12 @@
 {application, app_core,
  [
   {description, ""},
-  {vsn, "1"},
-  {registered, []},
+  {vsn, "0.0.1"},
+  {registered, [app_core_sup]},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  pooler
                  ]},
   {mod, { app_core_app, []}},
   {env, []}

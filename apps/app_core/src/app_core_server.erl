@@ -28,19 +28,22 @@ start_link() ->
 save_term(Term) ->
     gen_server:call(?SERVER, {save_term, Term}, infinity).
 
-retrieve_term(Term) ->
-    gen_server:call(?SERVER, {retrieve_term, Term}, infinity).
+retrieve_term(Key) ->
+    gen_server:call(?SERVER, {retrieve_term, Key}, infinity).
 
 init(Args) ->
     {ok, Args}.
 
 handle_call({save_term, Term}, _From, State) ->
     Key = proplists:get_value(key, Term),
-    {ok, SavedTerm} = pooler:use_member(fun(RiakPid) -> app_riak:put_term(RiakPid, ?BUCKET, Key, Term) end),
+    RiakPid = pooler:take_member(),
+    {ok, SavedTerm} = app_riak:put_term(RiakPid, ?BUCKET, Key, Term),
+    pooler:return_member(RiakPid, ok),
     {reply, SavedTerm, State};
-handle_call({retrieve_term, Term}, _From, State) ->
-    Key = proplists:get_value(key, Term),
-    {ok, RetrievedTerm} = pooler:use_member(fun(RiakPid) -> app_riak:get_term(RiakPid, ?BUCKET, Key, Term) end),
+handle_call({retrieve_term, Key}, _From, State) ->
+    RiakPid = pooler:take_member(),
+    {ok, RetrievedTerm} = app_riak:get_term(RiakPid, ?BUCKET, Key),
+    pooler:return_member(RiakPid, ok),
     {reply, RetrievedTerm, State};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.

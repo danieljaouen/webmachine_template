@@ -1,4 +1,12 @@
 -module(app_riak).
+-export([
+    put_object/2,
+    get_object/3,
+    put_json/4,
+    get_json/3,
+    put_term/4,
+    get_term/3
+]).
 
 prep_term(Term, Key) ->
     case proplists:get_value(Term, key) of
@@ -42,15 +50,20 @@ get_json(RiakPid, Bucket, Key) ->
 put_term(RiakPid, Bucket, Key, Term) ->
     case get_object(RiakPid, Bucket, Key) of
         {ok, FetchedObject} ->
-            TermWithKey = prep_term(Term),
+            TermWithKey = prep_term(Term, Key),
             Json = term_to_json(TermWithKey),
             NewObject = riakc_obj:update_value(FetchedObject, Json, "application/json"),
             ok = riakc_pb_socket:put(RiakPid, NewObject),
             {ok, TermWithKey};
         {error, not_found} ->
-            TermWithKey = prep_term(Term),
+            TermWithKey = prep_term(Term, Key),
             Json = term_to_json(TermWithKey),
             Object = riakc_obj:new(Bucket, Key, Json, "application/json"),
             ok = riakc_pb_socket:put(RiakPid, Object),
             {ok, TermWithKey}
     end.
+
+get_term(RiakPid, Bucket, Key) ->
+    {ok, Json} = get_json(RiakPid, Bucket, Key),
+    Term = json_to_term(Json),
+    {ok, Term}.

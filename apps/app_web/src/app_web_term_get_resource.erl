@@ -1,4 +1,4 @@
--module(app_web_term_resource).
+-module(app_web_term_get_resource).
 -export([init/1, to_html/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").

@@ -8,6 +8,10 @@ init([]) -> {ok, undefined}.
 to_html(ReqData, State) ->
     PathInfo = wrq:path_info(ReqData),
     Key = proplists:get_value(key, PathInfo),
-    {ok, RetrievedTerm} = app_core_server:retrieve_term(Key),
-    {ok, Content} = sample_dtl:render([{param, RetrievedTerm}]),
+    {ok, Content} = case app_core_server:retrieve_term(Key) of
+        {ok, RetrievedTerm} ->
+            sample_dtl:render([{param, RetrievedTerm}]);
+        {error, notfound} ->
+            sample_dtl:render([{param, "not found"}])
+    end,
     {Content, ReqData, State}.

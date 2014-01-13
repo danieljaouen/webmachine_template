@@ -27,8 +27,12 @@ put_object(RiakPid, Object) ->
     {ok, Object}.
 
 get_object(RiakPid, Bucket, Key) ->
-    {ok, FetchedObject} = riakc_pb_socket:get(RiakPid, Bucket, Key),
-    FetchedObject.
+    case riakc_pb_socket:get(RiakPid, Bucket, Key) of
+        {ok, FetchedObject} ->
+            {ok, FetchedObject};
+        {error, notfound} ->
+            {error, notfound}
+    end.
 
 put_json(RiakPid, Bucket, Key, Json) ->
     case get_object(RiakPid, Bucket, Key) of
@@ -36,16 +40,20 @@ put_json(RiakPid, Bucket, Key, Json) ->
             NewObject = riakc_obj:update_value(FetchedObject, Json, "application/json"),
             ok = riakc_pb_socket:put(RiakPid, NewObject),
             {ok, Json};
-        {error, not_found} ->
+        {error, notfound} ->
             Object = riakc_obj:new(Bucket, Key, Json, "application/json"),
             ok = riakc_pb_socket:put(RiakPid, Object),
             {ok, Json}
     end.
 
 get_json(RiakPid, Bucket, Key) ->
-    {ok, Object} = get_object(RiakPid, Bucket, Key),
-    Json = riakc_obj:get_value(Object),
-    {ok, Json}.
+    case get_object(RiakPid, Bucket, Key) of
+        {ok, Object} ->
+            Json = riakc_obj:get_value(Object),
+            {ok, Json};
+        {error, notfound} ->
+            {error, notfound}
+    end.
 
 put_term(RiakPid, Bucket, Key, Term) ->
     case get_object(RiakPid, Bucket, Key) of
@@ -55,7 +63,7 @@ put_term(RiakPid, Bucket, Key, Term) ->
             NewObject = riakc_obj:update_value(FetchedObject, Json, "application/json"),
             ok = riakc_pb_socket:put(RiakPid, NewObject),
             {ok, TermWithKey};
-        {error, not_found} ->
+        {error, notfound} ->
             TermWithKey = prep_term(Term, Key),
             Json = term_to_json(TermWithKey),
             Object = riakc_obj:new(Bucket, Key, Json, "application/json"),
@@ -64,6 +72,10 @@ put_term(RiakPid, Bucket, Key, Term) ->
     end.
 
 get_term(RiakPid, Bucket, Key) ->
-    {ok, Json} = get_json(RiakPid, Bucket, Key),
-    Term = json_to_term(Json),
-    {ok, Term}.
+    case get_json(RiakPid, Bucket, Key) of
+        {ok, Json} ->
+            Term = json_to_term(Json),
+            {ok, Term};
+        {error, notfound} ->
+            {error, notfound}
+    end.
